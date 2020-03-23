@@ -3,37 +3,61 @@ from microlisp import *
 
 class TestMicroLisp(unittest.TestCase):
     def test_tokenizer_spaces(self):
-        self.assertEqual( tokenize(" (  + apples oranges )  "), ['(', '+', 'apples', 'oranges', ')'] )
+        self.assertEqual( microlisp_tokenize(" (  + apples oranges )  "), ['(', '+', 'apples', 'oranges', ')'] )
     def test_tokenizer_bigger(self):
-        self.assertEqual(tokenize("(first (list 1 (+ 2 3) 9))"), 
+        self.assertEqual(microlisp_tokenize("(first (list 1 (+ 2 3) 9))"), 
                          ['(', 'first', '(', 'list', '1', '(', '+', '2', '3', ')', '9', ')', ')'])
     def test_parse_exception(self):
         try:
-            toks = tokenize("(list (of some (me large) 10 15.5)")
-            lisp_parse(toks)
+            toks = microlisp_tokenize("(list (of some (me large) 10 15.5)")
+            microlisp_parse(toks)
             self.fail("expect exception")
         except SyntaxError:
             self.assertTrue(True)
     def test_parse_exception_invalid_atom(self):
         try:
-            toks = tokenize("(list' (of some))")
-            lisp_parse(toks)
+            toks = microlisp_tokenize("(list' (of some))")
+            microlisp_parse(toks)
             self.fail("expect exception")
         except SyntaxError:
             self.assertTrue(True)
     def test_parse_exception_invalid_atom2(self):
         try:
-            toks = tokenize("(list ())")
-            lisp_parse(toks)
+            toks = microlisp_tokenize("(list ())")
+            microlisp_parse(toks)
             self.fail("expect exception")
         except SyntaxError:
             self.assertTrue(True)
     def test_parse_complex(self):
-        self.assertEqual( lisp_parse(tokenize("(list (of some (me true false) (false again) 10) 15.5)")),
+        self.assertEqual( microlisp_parse(microlisp_tokenize("(list (of some (me true false) (false again) 10) 15.5)"), 'tuple'),
             ('list', ('of', 'some', ('me', True, False), ('false', 'again'), 10), 15.5))
     def test_parse_simple(self):
-        self.assertEqual( lisp_parse(tokenize("(list)")),
+        self.assertEqual( microlisp_parse(microlisp_tokenize("(list)"), 'tuple'),
             ('list',))
+    def test_eval1(self):
+        expr = microlisp_parse( microlisp_tokenize("(and true false)") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {}), False)
+    def test_eval2(self):
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) false)") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {}), False)
+    def test_eval3(self):
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (not false))") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {}), True)
+    def test_eval4_exception(self):
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (booz false))") )
+        try:
+            microlisp_eval(expr, STANDART_LOGIC_FUNC, {})
+            self.fail("expect exception")
+        except RuntimeError:
+            self.assertTrue(True)
+    def test_eval5_env(self):
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (not falsekey))") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {"falsekey": False}), True)
+    def test_eval6_testif(self):
+        expr = microlisp_parse( microlisp_tokenize("(if true 1 0)") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {}), 1)
+        expr = microlisp_parse( microlisp_tokenize("(if false 1 0)") )
+        self.assertEqual( microlisp_eval(expr, STANDART_LOGIC_FUNC, {}), 0)
 
 if __name__=='__main__':
 	unittest.main()
