@@ -71,6 +71,16 @@ class TestMicroLisp(unittest.TestCase):
         }
         expr = microlisp_parse( microlisp_tokenize("(+ (+ 1 2) (+ 2 param))") )
         self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 8)
+    def test_eval9_return_as_atom(self):
+        myfuncs = {
+            "env": {"params_count": 1, "func": (lambda funeval, a: funeval(funeval(a)) )},
+            "asis": {"params_count": 1, "func": (lambda funeval, a: a )},
+            "+": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a)+funeval(b) )},
+        }
+        expr = microlisp_parse( microlisp_tokenize("(+ (+ 1 2) (env (asis param)))") )
+        self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 6)
+        expr = microlisp_parse( microlisp_tokenize("(env param)") )
+        self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 3)
 
 if __name__=='__main__':
 	unittest.main()

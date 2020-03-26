@@ -56,6 +56,8 @@ STANDART_LOGIC_FUNC = {
 "and": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) and funeval(b) )},
 "or": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) or funeval(b) )},
 "if": {"params_count": 3, "func": (lambda funeval, a, b, c: funeval(b) if funeval(a) else funeval(c) )},
+#env <param> - get value from environment by key <param>, <param> may be result of function
+"env": {"params_count": 1, "func": (lambda funeval, a: funeval(funeval(a)) )},
 }    
     
 def microlisp_eval(funcs, env, expr):
