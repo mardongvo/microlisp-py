@@ -51,26 +51,33 @@ def microlisp_decode_atom(s):
     except: pass
     return s
 
+def microlisp_is_expression(s):
+    if isinstance(s, tuple) or isinstance(s, list):
+        return True
+    return False
+
 STANDART_LOGIC_FUNC = {
 "not": {"params_count": 1, "func": (lambda funeval, a: not funeval(a) )},
 "and": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) and funeval(b) )},
 "or": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) or funeval(b) )},
 "if": {"params_count": 3, "func": (lambda funeval, a, b, c: funeval(b) if funeval(a) else funeval(c) )},
-#env <param> - get value from environment by key <param>, <param> may be result of function
-"env": {"params_count": 1, "func": (lambda funeval, a: funeval(funeval(a)) )},
 }    
     
 def microlisp_eval(funcs, env, expr):
-    if isinstance(expr, tuple) or isinstance(expr, list):
-        if expr[0] not in funcs:
-            raise RuntimeError("unknown function "+expr[0])
-        func_def = funcs[expr[0]]
-        if len(expr[1:]) != func_def["params_count"]:
-            raise RuntimeError("invalid parameters count for "+expr[0])
-        return func_def["func"]( partial(microlisp_eval, funcs, env), *expr[1:] )
-    if isinstance(expr, str):
-        try:
-            return env[expr]
-        except KeyError:
-            raise RuntimeError("unknown atom "+expr)
+    if microlisp_is_expression(expr):
+        #env <param> - get value from environment by key <param>, <param> may be result of function
+        if expr[0] == "env":
+            if len(expr[1:]) != 1:
+                raise RuntimeError("invalid parameters count for "+expr[0])
+            try:
+                return env[microlisp_eval(funcs, env, expr[1])]
+            except KeyError:
+                raise RuntimeError("unknown atom "+expr)
+        else:
+            if expr[0] not in funcs:
+                raise RuntimeError("unknown function "+expr[0])
+            func_def = funcs[expr[0]]
+            if len(expr[1:]) != func_def["params_count"]:
+                raise RuntimeError("invalid parameters count for "+expr[0])
+            return func_def["func"]( partial(microlisp_eval, funcs, env), *expr[1:] )
     return expr

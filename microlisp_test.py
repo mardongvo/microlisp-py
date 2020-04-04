@@ -51,7 +51,7 @@ class TestMicroLisp(unittest.TestCase):
         except RuntimeError:
             self.assertTrue(True)
     def test_eval5_env(self):
-        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (not falsekey))") )
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (not (env falsekey)))") )
         self.assertEqual( microlisp_eval(STANDART_LOGIC_FUNC, {"falsekey": False}, expr), True)
     def test_eval6_testif(self):
         expr = microlisp_parse( microlisp_tokenize("(if true 1 0)") )
@@ -69,11 +69,10 @@ class TestMicroLisp(unittest.TestCase):
         myfuncs = {
             "+": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a)+funeval(b) )},
         }
-        expr = microlisp_parse( microlisp_tokenize("(+ (+ 1 2) (+ 2 param))") )
+        expr = microlisp_parse( microlisp_tokenize("(+ (+ 1 2) (+ 2 (env param)))") )
         self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 8)
     def test_eval9_return_as_atom(self):
         myfuncs = {
-            "env": {"params_count": 1, "func": (lambda funeval, a: funeval(funeval(a)) )},
             "asis": {"params_count": 1, "func": (lambda funeval, a: a )},
             "+": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a)+funeval(b) )},
         }
@@ -81,6 +80,9 @@ class TestMicroLisp(unittest.TestCase):
         self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 6)
         expr = microlisp_parse( microlisp_tokenize("(env param)") )
         self.assertEqual( microlisp_eval(myfuncs, {"param": 3}, expr), 3)
+    def test_eval10_deepenv(self):
+        expr = microlisp_parse( microlisp_tokenize("(env (env key1))") )
+        self.assertEqual( microlisp_eval({}, {"key1": "key2", "key2": "value"}, expr), "value")
 
 if __name__=='__main__':
 	unittest.main()
