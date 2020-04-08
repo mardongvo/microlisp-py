@@ -83,6 +83,13 @@ class TestMicroLisp(unittest.TestCase):
     def test_eval10_deepenv(self):
         expr = microlisp_parse( microlisp_tokenize("(env (env key1))") )
         self.assertEqual( microlisp_eval({}, {"key1": "key2", "key2": "value"}, expr), "value")
+    def test_eval11_function_any_param_count(self):
+        myfuncs = {
+            "sum": {"params_count": -1, "func": (lambda funeval, *a: sum(map(lambda x: funeval(x), a)) )},
+            "+": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a)+funeval(b) )},
+        }
+        expr = microlisp_parse( microlisp_tokenize("(sum (+ 1 2) 3 (sum 2 3 4) 4 5 6)") )
+        self.assertEqual( microlisp_eval(myfuncs, {}, expr), 30)
 
 if __name__=='__main__':
 	unittest.main()

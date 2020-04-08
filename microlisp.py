@@ -77,7 +77,7 @@ def microlisp_eval(funcs, env, expr):
             if expr[0] not in funcs:
                 raise RuntimeError("unknown function "+expr[0])
             func_def = funcs[expr[0]]
-            if len(expr[1:]) != func_def["params_count"]:
+            if (len(expr[1:]) != func_def["params_count"]) and (func_def["params_count"]!=-1):
                 raise RuntimeError("invalid parameters count for "+expr[0])
             return func_def["func"]( partial(microlisp_eval, funcs, env), *expr[1:] )
     return expr
