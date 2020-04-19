@@ -1,5 +1,5 @@
 import re
-from functools import partial
+from functools import partial, reduce
 
 #https://github.com/DerekHarter/python-lisp-parser/blob/master/src/Python-Lisp-Parser.ipynb
 def microlisp_tokenize(txt):
@@ -57,10 +57,10 @@ def microlisp_is_expression(s):
     return False
 
 STANDART_LOGIC_FUNC = {
-"not": {"params_count": 1, "func": (lambda funeval, a: not funeval(a) )},
-"and": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) and funeval(b) )},
-"or": {"params_count": 2, "func": (lambda funeval, a, b: funeval(a) or funeval(b) )},
-"if": {"params_count": 3, "func": (lambda funeval, a, b, c: funeval(b) if funeval(a) else funeval(c) )},
+"not": {"params_count": 1, "commutative": False, "associative": False, "func": (lambda funeval, a: not funeval(a) )},
+"and": {"params_count": -1, "commutative": True, "associative": True, "func": (lambda funeval, *aa: reduce(lambda x,y: funeval(x) and funeval(y), aa) )},
+"or": {"params_count": -1, "commutative": True, "associative": True, "func": (lambda funeval, *aa: reduce(lambda x,y: funeval(x) or funeval(y), aa) )},
+"if": {"params_count": 3, "commutative": False, "associative": False, "func": (lambda funeval, a, b, c: funeval(b) if funeval(a) else funeval(c) )},
 }    
     
 def microlisp_eval(funcs, env, expr):
@@ -81,3 +81,44 @@ def microlisp_eval(funcs, env, expr):
                 raise RuntimeError("invalid parameters count for "+expr[0])
             return func_def["func"]( partial(microlisp_eval, funcs, env), *expr[1:] )
     return expr
+
+def microlisp_dumps(expr):
+    if microlisp_is_expression(expr):
+        return "("+expr[0]+(" " if len(expr)>1 else "")+(" ".join(list(map(microlisp_dumps,expr[1:]))) )+")"
+    else:
+        return str(expr)
+    
+def ml_sortkey(expr):
+    if microlisp_is_expression(expr):
+        return "0-"+expr[0]+("".join(list(map(ml_sortkey, expr[1:]))))
+    else:
+        return "1-"+str(expr)
+
+def microlisp_sort(funcs, expr):
+    if microlisp_is_expression(expr):
+        lst = list(map(partial(microlisp_sort,funcs), expr[1:]))
+        if (expr[0] in funcs) and funcs[expr[0]]["commutative"]:
+            lst.sort(key=ml_sortkey)
+        return [expr[0]]+lst
+    else:
+        return expr
+
+def microlisp_optimize(funcs, expr):
+    if microlisp_is_expression(expr):
+        params = list(map(partial(microlisp_optimize, funcs), expr[1:]))
+        if (expr[0] in funcs):
+            func_def = funcs[expr[0]]
+            if (func_def["params_count"] == -1) and func_def["associative"]:
+                do_optimize = True
+                while do_optimize:
+                    do_optimize = False
+                    for i in range(len(params)):
+                        p = params[i]
+                        if not microlisp_is_expression(p): continue
+                        if p[0] == expr[0]:
+                            do_optimize = True
+                            params.extend(p[1:])
+                            del params[i:i+1]
+        return [expr[0]]+params
+    else:
+        return expr

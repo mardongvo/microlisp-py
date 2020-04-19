@@ -59,7 +59,7 @@ class TestMicroLisp(unittest.TestCase):
         expr = microlisp_parse( microlisp_tokenize("(if false 1 0)") )
         self.assertEqual( microlisp_eval(STANDART_LOGIC_FUNC, {}, expr), 0)
     def test_eval7_exception(self):
-        expr = microlisp_parse( microlisp_tokenize("(and (or true false) )") )
+        expr = microlisp_parse( microlisp_tokenize("(and (or true false) (not a b))") )
         try:
             microlisp_eval(STANDART_LOGIC_FUNC, {}, expr)
             self.fail("expect exception")
@@ -90,6 +90,37 @@ class TestMicroLisp(unittest.TestCase):
         }
         expr = microlisp_parse( microlisp_tokenize("(sum (+ 1 2) 3 (sum 2 3 4) 4 5 6)") )
         self.assertEqual( microlisp_eval(myfuncs, {}, expr), 30)
+    def test_eval12_dumps(self):
+        for txt in ["(test (test2 boo zoo) (env key1) foo (bar))", "(test a b c)"]:
+            expr = microlisp_parse( microlisp_tokenize(txt) )
+            self.assertEqual( microlisp_dumps(expr), txt)
+    def test_eval13_sort(self):
+        for txt_src, txt_res in [("(and (b a c) a c b (a b c) (or b (or 3 2) a))",
+            "(and (a b c) (b a c) (or (or 2 3) a b) a b c)")]:
+            expr = microlisp_parse( microlisp_tokenize(txt_src) )
+            e = microlisp_sort(STANDART_LOGIC_FUNC, expr)
+            self.assertEqual( microlisp_dumps(e), txt_res)
+    def test_eval14_optimize(self):
+        for txt_src, txt_res in [("(or a b)", "(or a b)"),("(or (or a b) c)", "(or c a b)"),
+            ("(and (and (and a c) b) c (or a b (or c d)))","(and c (or a b c d) b a c)")]:
+            expr = microlisp_parse( microlisp_tokenize(txt_src) )
+            e = microlisp_optimize(STANDART_LOGIC_FUNC, expr)
+            self.assertEqual( microlisp_dumps(e), txt_res)
+    def test_eval15_optimize_same_params(self):
+        for txt_src, txt_res in [("(or a b c d a c)", "(or a b c d)"),("(or a (b c) d e (b c) a)", "(or (b c) a d e)")]:
+            expr = microlisp_parse( microlisp_tokenize(txt_src) )
+            e = microlisp_optimize(STANDART_LOGIC_FUNC, expr)
+            e = microlisp_sort(STANDART_LOGIC_FUNC, e)
+            res_param = []
+            param = e[1:]
+            for i in range(len(param)):
+                if i==0:
+                    res_param.append(param[i])
+                else:
+                    if param[i] != param[i-1]:
+                        res_param.append(param[i])
+            e = [e[0]]+res_param
+            self.assertEqual( microlisp_dumps(e), txt_res)
 
 if __name__=='__main__':
 	unittest.main()
