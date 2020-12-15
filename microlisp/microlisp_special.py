@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from microlisp import microlisp_parse, microlisp_tokenize, microlisp_eval, microlisp_is_expression, microlisp_optimize, ml_sortkey, microlisp_dumps
+from .microlisp import microlisp_parse, microlisp_tokenize, microlisp_eval, microlisp_is_expression, microlisp_optimize, ml_sortkey, microlisp_dumps
 import copy
 from functools import partial
 

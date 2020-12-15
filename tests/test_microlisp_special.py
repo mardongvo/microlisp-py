@@ -1,6 +1,6 @@
 import unittest
-from microlisp import microlisp_compile, microlisp_dumps, microlisp_optimize, microlisp_is_expression
-from microlisp_special import tree_generator, shrink_all, SPECIAL_LISP_FUNC, special_optimize
+from microlisp.microlisp import microlisp_compile, microlisp_dumps, microlisp_optimize, microlisp_is_expression
+from microlisp.microlisp_special import tree_generator, shrink_all, SPECIAL_LISP_FUNC, special_optimize
 
 def func_stop_test(expr, elem):
     if microlisp_is_expression(expr):

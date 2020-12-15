@@ -1,5 +1,5 @@
 import unittest
-from microlisp import *
+from microlisp.microlisp import *
 
 class TestMicroLisp(unittest.TestCase):
     def test_tokenizer_spaces(self):
